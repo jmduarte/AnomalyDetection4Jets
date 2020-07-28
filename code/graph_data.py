@@ -61,6 +61,7 @@ class GraphDataset(Dataset):
                         n_particles = len(jet)
                     particles = np.zeros((n_particles, 4))
                     for p, part in enumerate(jet):
+                        if n_particles > -1 and p >= n_particles: break
                         particles[p,:] = np.array([part.px,
                                                    part.py,
                                                    part.pz,
