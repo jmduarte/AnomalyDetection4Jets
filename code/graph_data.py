@@ -8,9 +8,10 @@ import pandas as pd
 from pyjet import cluster,DTYPE_PTEPM
 
 class GraphDataset(Dataset):
-    def __init__(self, root, transform=None, pre_transform=None, start=0, stop=-1):
+    def __init__(self, root, transform=None, pre_transform=None, start=0, stop=-1, n_particles=-1):
         self.start = start
         self.stop = stop
+        self.n_particles = n_particles
         super(GraphDataset, self).__init__(root, transform, pre_transform) 
 
 
@@ -35,6 +36,7 @@ class GraphDataset(Dataset):
 
     def process(self):
         data = []
+        nonzero_particles = []
         for raw_path in self.raw_paths:
             df = pd.read_hdf(raw_path,stop=10000) # just read first 10000 events
             all_events = df.values
@@ -53,17 +55,22 @@ class GraphDataset(Dataset):
                 jets = sequence.inclusive_jets()
                 for jet in jets: # for each jet get (px, py, pz, e)
                     if jet.pt < 200: continue
-                    particles = np.zeros((len(jet),4))
+                    if self.n_particles > -1: 
+                        n_particles = self.n_particles
+                    else:
+                        n_particles = len(jet)
+                    particles = np.zeros((n_particles, 4))
                     for p, part in enumerate(jet):
                         particles[p,:] = np.array([part.px,
                                                    part.py,
                                                    part.pz,
                                                    part.e])
                     data.append(particles)
+                    nonzero_particles.append(len(jet))
         ijet = 0
         for d in data:
-            nparticles = d.shape[0]
-            pairs = [[i, j] for (i, j) in itertools.product(range(nparticles),range(nparticles)) if i!=j]
+            n_particles = nonzero_particles[ijet]
+            pairs = [[i, j] for (i, j) in itertools.product(range(n_particles),range(n_particles)) if i!=j]
             edge_index = torch.tensor(pairs, dtype=torch.long)
             edge_index=edge_index.t().contiguous()
             x = torch.tensor(d, dtype=torch.float)
