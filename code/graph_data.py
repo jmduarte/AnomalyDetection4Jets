@@ -21,10 +21,12 @@ class GraphDataset(Dataset):
 
     @property
     def processed_file_names(self):
-        njets = 24043
         if self.start!=0 and self.stop!=-1:
-            njets = self.stop-self.start
-        return ['data_{}.pt'.format(i) for i in range(njets)]
+            njetpairs = self.stop-self.start
+            return ['data_{}.pt'.format(i) for i in range(self.start,self.stop)]
+        else:
+            njets = 24043
+            return ['data_{}.pt'.format(i) for i in range(njets)]
 
     def __len__(self):
         return len(self.processed_file_names)
