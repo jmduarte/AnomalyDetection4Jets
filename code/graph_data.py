@@ -37,11 +37,13 @@ class GraphDataset(Dataset):
     def process(self):
         data = []
         nonzero_particles = []
+        event_indices = []
         for raw_path in self.raw_paths:
             df = pd.read_hdf(raw_path,stop=10000) # just read first 10000 events
             all_events = df.values
             rows = all_events.shape[0]
             cols = all_events.shape[1]
+            event_idx = 0
             for i in range(rows):
                 pseudojets_input = np.zeros(len([x for x in all_events[i][::3] if x > 0]), dtype=DTYPE_PTEPM)
                 for j in range(cols // 3):
@@ -70,8 +72,11 @@ class GraphDataset(Dataset):
                                                    part.e])
                     data.append(particles)
                     nonzero_particles.append(len(jet))
+                    event_indices.append(event_idx)
+                event_idx += 1
+
         ijet = 0
-        for d in data:
+        for data_idx, d in enumerate(data):
             n_particles = nonzero_particles[ijet]
             pairs = [[i, j] for (i, j) in itertools.product(range(n_particles),range(n_particles)) if i!=j]
             edge_index = torch.tensor(pairs, dtype=torch.long)
@@ -84,7 +89,7 @@ class GraphDataset(Dataset):
             if self.pre_transform is not None:
                 data = self.pre_transform(data)
 
-            torch.save(data, osp.join(self.processed_dir, 'data_{}.pt'.format(ijet)))
+            torch.save((data, event_indices[data_idx]), osp.join(self.processed_dir, 'data_{}.pt'.format(ijet)))
             ijet += 1
 
     def get(self, idx):
