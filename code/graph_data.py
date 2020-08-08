@@ -39,6 +39,10 @@ class GraphDataset(Dataset):
         nonzero_particles = []
         event_indices = []
         masses = []
+        px = []
+        py = []
+        pz = []
+        e = []
         for raw_path in self.raw_paths:
             df = pd.read_hdf(raw_path,stop=10000) # just read first 10000 events
             all_events = df.values
@@ -53,6 +57,7 @@ class GraphDataset(Dataset):
                         pseudojets_input[j]['eta'] = all_events[i][j*3+1]
                         pseudojets_input[j]['phi'] = all_events[i][j*3+2]
                     pass
+                
                 # cluster jets from the particles in one observation
                 sequence = cluster(pseudojets_input, R=1.0, p=-1)
                 jets = sequence.inclusive_jets()
@@ -75,6 +80,11 @@ class GraphDataset(Dataset):
                     nonzero_particles.append(len(jet))
                     event_indices.append(event_idx)
                     mass.append(jet.mass)
+                    px.append(jet.px)
+                    py.append(jet.py)
+                    pz.append(jet.pz)
+                    e.append(jet.e)
+                
                 event_idx += 1
 
         ijet = 0
@@ -91,8 +101,8 @@ class GraphDataset(Dataset):
             if self.pre_transform is not None:
                 data = self.pre_transform(data)
             
-            # save data in format (jet_Data, event_of_jet, mass_of_jet)
-            torch.save((data, event_indices[data_idx], mass[data_idx]), osp.join(self.processed_dir, 'data_{}.pt'.format(ijet)))
+            # save data in format (jet_Data, event_of_jet, mass_of_jet, px, py, pz, e)
+            torch.save((data, event_indices[data_idx], mass[data_idx], px[data_idx], py[data_idx], pz[data_idx], e[data_idx]), osp.join(self.processed_dir, 'data_{}.pt'.format(ijet)))
             ijet += 1
 
     def get(self, idx):
