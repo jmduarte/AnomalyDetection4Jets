@@ -38,6 +38,7 @@ class GraphDataset(Dataset):
         data = []
         nonzero_particles = []
         event_indices = []
+        masses = []
         for raw_path in self.raw_paths:
             df = pd.read_hdf(raw_path,stop=10000) # just read first 10000 events
             all_events = df.values
@@ -73,6 +74,7 @@ class GraphDataset(Dataset):
                     data.append(particles)
                     nonzero_particles.append(len(jet))
                     event_indices.append(event_idx)
+                    mass.append(jet.mass)
                 event_idx += 1
 
         ijet = 0
@@ -88,8 +90,9 @@ class GraphDataset(Dataset):
                 continue
             if self.pre_transform is not None:
                 data = self.pre_transform(data)
-
-            torch.save((data, event_indices[data_idx]), osp.join(self.processed_dir, 'data_{}.pt'.format(ijet)))
+            
+            # save data in format (jet_Data, event_of_jet, mass_of_jet)
+            torch.save((data, event_indices[data_idx], mass[data_idx]), osp.join(self.processed_dir, 'data_{}.pt'.format(ijet)))
             ijet += 1
 
     def get(self, idx):
