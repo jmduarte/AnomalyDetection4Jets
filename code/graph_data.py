@@ -8,23 +8,40 @@ import pandas as pd
 from pyjet import cluster,DTYPE_PTEPM
 
 class GraphDataset(Dataset):
-    def __init__(self, root, transform=None, pre_transform=None, start=0, stop=-1, n_particles=-1):
+    def __init__(self, root, transform=None, pre_transform=None, start=0, stop=-1, n_particles=-1, bb=0):
         self.start = start
         self.stop = stop
         self.n_particles = n_particles
+        self.bb = bb
         super(GraphDataset, self).__init__(root, transform, pre_transform) 
 
 
     @property
     def raw_file_names(self):
-        return ['events_LHCO2020_backgroundMC_Pythia.h5']
+        if self.bb == 0:
+            return ['events_LHCO2020_backgroundMC_Pythia.h5']
+        elif self.bb == 1:
+            return ['events_LHCO2020_BlackBox1.h5']
+        elif self.bb == 2:
+            return ['events_LHCO2020_BlackBox2.h5']
+        else:
+            return ['events_LHCO2020_BlackBox3.h5']
 
     @property
     def processed_file_names(self):
         njets = 24043
         if self.start!=0 and self.stop!=-1:
             njets = self.stop-self.start
-        return ['data_{}.pt'.format(i) for i in range(njets)]
+        
+        # determine which dataset to read
+        if self.bb == 0:
+            return ['data_{}.pt'.format(i) for i in range(njets)]
+        elif self.bb == 1:
+            return ['data_bb1_{}.pt'.format(i) for i in range(njets)]
+        elif self.bb == 2:
+            return ['data_bb2_{}.pt'.format(i) for i in range(njets)]
+        else:
+            return ['data_bb3_{}.pt'.format(i) for i in range(njets)]
 
     def __len__(self):
         return len(self.processed_file_names)
@@ -43,6 +60,7 @@ class GraphDataset(Dataset):
         py = []
         pz = []
         e = []
+        i = 0
         for raw_path in self.raw_paths:
             df = pd.read_hdf(raw_path,stop=10000) # just read first 10000 events
             all_events = df.values
@@ -102,7 +120,26 @@ class GraphDataset(Dataset):
                 data = self.pre_transform(data)
             
             # save data in format (jet_Data, event_of_jet, mass_of_jet, px, py, pz, e)
-            torch.save((data, event_indices[data_idx], masses[data_idx], px[data_idx], py[data_idx], pz[data_idx], e[data_idx]), osp.join(self.processed_dir, 'data_{}.pt'.format(ijet)))
+            if self.bb == 0:
+                torch.save((data, event_indices[data_idx],
+                            masses[data_idx], px[data_idx],
+                            py[data_idx], pz[data_idx],
+                            e[data_idx]), osp.join(self.processed_dir, 'data_{}.pt'.format(ijet)))
+            elif self.bb == 1:
+                torch.save((data, event_indices[data_idx],
+                            masses[data_idx], px[data_idx],
+                            py[data_idx],
+                            pz[data_idx], e[data_idx]), osp.join(self.processed_dir, 'data_bb1_{}.pt'.format(ijet)))
+            elif self.bb == 2:
+                torch.save((data, event_indices[data_idx],
+                            masses[data_idx], px[data_idx],
+                            py[data_idx], pz[data_idx],
+                            e[data_idx]), osp.join(self.processed_dir, 'data_bb1_{}.pt'.format(ijet)))
+            else:
+                torch.save((data, event_indices[data_idx],
+                            masses[data_idx], px[data_idx],
+                            py[data_idx], pz[data_idx],
+                            e[data_idx]), osp.join(self.processed_dir, 'data_bb3_{}.pt'.format(ijet)))
             ijet += 1
 
     def get(self, idx):
