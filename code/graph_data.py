@@ -79,7 +79,7 @@ class GraphDataset(Dataset):
                     data.append(particles)
                     nonzero_particles.append(len(jet))
                     event_indices.append(event_idx)
-                    mass.append(jet.mass)
+                    masses.append(jet.mass)
                     px.append(jet.px)
                     py.append(jet.py)
                     pz.append(jet.pz)
@@ -102,7 +102,7 @@ class GraphDataset(Dataset):
                 data = self.pre_transform(data)
             
             # save data in format (jet_Data, event_of_jet, mass_of_jet, px, py, pz, e)
-            torch.save((data, event_indices[data_idx], mass[data_idx], px[data_idx], py[data_idx], pz[data_idx], e[data_idx]), osp.join(self.processed_dir, 'data_{}.pt'.format(ijet)))
+            torch.save((data, event_indices[data_idx], masses[data_idx], px[data_idx], py[data_idx], pz[data_idx], e[data_idx]), osp.join(self.processed_dir, 'data_{}.pt'.format(ijet)))
             ijet += 1
 
     def get(self, idx):
