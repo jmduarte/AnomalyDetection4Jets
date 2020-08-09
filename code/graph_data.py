@@ -8,6 +8,14 @@ import pandas as pd
 from pyjet import cluster,DTYPE_PTEPM
 
 class GraphDataset(Dataset):
+    """
+    @Params
+    root: path
+    start: what jet # to start reading at
+    stop: jet # to stop at (default to all)
+    n_particles: particles + padding for jet (default no padding)
+    bb: dataset to read in (0=background)
+    """
     def __init__(self, root, transform=None, pre_transform=None, start=0, stop=-1, n_particles=-1, bb=0):
         self.start = start
         self.stop = stop
@@ -143,7 +151,15 @@ class GraphDataset(Dataset):
             ijet += 1
 
     def get(self, idx):
-        data = torch.load(osp.join(self.processed_dir, 'data_{}.pt'.format(idx)))
-        return data
-
-
+        if self.bb == 0:
+            data = torch.load(osp.join(self.processed_dir, 'data_{}.pt'.format(idx)))
+            return data
+        elif self.bb == 1:
+            data = torch.load(osp.join(self.processed_dir, 'data_bb1_{}.pt'.format(idx)))
+            return data
+        elif self.bb == 2:
+            data = torch.load(osp.join(self.processed_dir, 'data_bb2_{}.pt'.format(idx)))
+            return data
+        elif self.bb == 3:
+            data = torch.load(osp.join(self.processed_dir, 'data_bb3_{}.pt'.format(idx)))
+            return data
