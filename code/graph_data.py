@@ -70,7 +70,7 @@ class GraphDataset(Dataset):
         e = []
         i = 0
         for raw_path in self.raw_paths:
-            df = pd.read_hdf(raw_path,stop=10000) # just read first 10000 events
+            df = pd.read_hdf(raw_path,stop=12500) # just read first 12500 events
             all_events = df.values
             rows = all_events.shape[0]
             cols = all_events.shape[1]
