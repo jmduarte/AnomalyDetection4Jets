@@ -142,7 +142,7 @@ class GraphDataset(Dataset):
                 torch.save((data, event_indices[data_idx],
                             masses[data_idx], px[data_idx],
                             py[data_idx], pz[data_idx],
-                            e[data_idx]), osp.join(self.processed_dir, 'data_bb1_{}.pt'.format(ijet)))
+                            e[data_idx]), osp.join(self.processed_dir, 'data_bb2_{}.pt'.format(ijet)))
             else:
                 torch.save((data, event_indices[data_idx],
                             masses[data_idx], px[data_idx],
