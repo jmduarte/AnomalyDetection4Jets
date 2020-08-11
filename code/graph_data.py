@@ -26,14 +26,11 @@ class GraphDataset(Dataset):
 
     @property
     def raw_file_names(self):
-        if self.bb == 0:
-            return ['events_LHCO2020_backgroundMC_Pythia.h5']
-        elif self.bb == 1:
-            return ['events_LHCO2020_BlackBox1.h5']
-        elif self.bb == 2:
-            return ['events_LHCO2020_BlackBox2.h5']
-        else:
-            return ['events_LHCO2020_BlackBox3.h5']
+        files = [['events_LHCO2020_backgroundMC_Pythia.h5'],
+                 ['events_LHCO2020_BlackBox1.h5'],
+                 ['events_LHCO2020_BlackBox2.h5'],
+                 ['events_LHCO2020_BlackBox3.h5']]
+        return files[self.bb]
 
     @property
     def processed_file_names(self):
@@ -41,15 +38,9 @@ class GraphDataset(Dataset):
         if self.start!=0 and self.stop!=-1:
             njets = self.stop-self.start
         
-        # determine which dataset to read
-        if self.bb == 0:
-            return ['data_{}.pt'.format(i) for i in range(njets)]
-        elif self.bb == 1:
-            return ['data_bb1_{}.pt'.format(i) for i in range(njets)]
-        elif self.bb == 2:
-            return ['data_bb2_{}.pt'.format(i) for i in range(njets)]
-        else:
-            return ['data_bb3_{}.pt'.format(i) for i in range(njets)]
+        # determine which box is being read
+        file_string = ['data_{}.pt', 'data_bb1_{}.pt', 'data_bb2_{}.pt', 'data_bb3_{}.pt']
+        return [file_string[self.bb].format(i) for i in range(njets)]
 
     def __len__(self):
         return len(self.processed_file_names)
@@ -113,6 +104,7 @@ class GraphDataset(Dataset):
                 
                 event_idx += 1
 
+        file_string = ['data_{}.pt', 'data_bb1_{}.pt', 'data_bb2_{}.pt', 'data_bb3_{}.pt']
         ijet = 0
         for data_idx, d in enumerate(data):
             n_particles = nonzero_particles[ijet]
@@ -128,38 +120,13 @@ class GraphDataset(Dataset):
                 data = self.pre_transform(data)
             
             # save data in format (jet_Data, event_of_jet, mass_of_jet, px, py, pz, e)
-            if self.bb == 0:
-                torch.save((data, event_indices[data_idx],
-                            masses[data_idx], px[data_idx],
-                            py[data_idx], pz[data_idx],
-                            e[data_idx]), osp.join(self.processed_dir, 'data_{}.pt'.format(ijet)))
-            elif self.bb == 1:
-                torch.save((data, event_indices[data_idx],
-                            masses[data_idx], px[data_idx],
-                            py[data_idx],
-                            pz[data_idx], e[data_idx]), osp.join(self.processed_dir, 'data_bb1_{}.pt'.format(ijet)))
-            elif self.bb == 2:
-                torch.save((data, event_indices[data_idx],
-                            masses[data_idx], px[data_idx],
-                            py[data_idx], pz[data_idx],
-                            e[data_idx]), osp.join(self.processed_dir, 'data_bb2_{}.pt'.format(ijet)))
-            else:
-                torch.save((data, event_indices[data_idx],
-                            masses[data_idx], px[data_idx],
-                            py[data_idx], pz[data_idx],
-                            e[data_idx]), osp.join(self.processed_dir, 'data_bb3_{}.pt'.format(ijet)))
+            torch.save((data, event_indices[data_idx],
+                        masses[data_idx], px[data_idx],
+                        py[data_idx], pz[data_idx],
+                        e[data_idx]), osp.join(self.processed_dir, file_string[self.bb].format(ijet)))
             ijet += 1
 
     def get(self, idx):
-        if self.bb == 0:
-            data = torch.load(osp.join(self.processed_dir, 'data_{}.pt'.format(idx)))
-            return data
-        elif self.bb == 1:
-            data = torch.load(osp.join(self.processed_dir, 'data_bb1_{}.pt'.format(idx)))
-            return data
-        elif self.bb == 2:
-            data = torch.load(osp.join(self.processed_dir, 'data_bb2_{}.pt'.format(idx)))
-            return data
-        elif self.bb == 3:
-            data = torch.load(osp.join(self.processed_dir, 'data_bb3_{}.pt'.format(idx)))
-            return data
+        file_string = ['data_{}.pt', 'data_bb1_{}.pt', 'data_bb2_{}.pt', 'data_bb3_{}.pt']
+        data = torch.load(osp.join(self.processed_dir, file_string[self.bb].format(idx)))
+        return data
