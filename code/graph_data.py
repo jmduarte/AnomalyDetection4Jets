@@ -35,11 +35,13 @@ class GraphDataset(Dataset):
     @property
     def processed_file_names(self):
         njets = 24043
-        if self.start!=0 and self.stop!=-1:
-            njets = self.stop-self.start
+        if self.start != 0 and self.stop!=-1:
+            njets = self.stop - self.start
         
-        # determine which box is being read
+        # possible boxes to read
         file_string = ['data_{}.pt', 'data_bb1_{}.pt', 'data_bb2_{}.pt', 'data_bb3_{}.pt']
+        
+        #files = [osp.basename(x) for x in glob(osp.join(self.processed_dir, file_string[self.bb]))]
         return [file_string[self.bb].format(i) for i in range(njets)]
 
     def __len__(self):
