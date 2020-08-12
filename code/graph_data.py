@@ -53,6 +53,14 @@ class GraphDataset(Dataset):
 
 
     def process(self):
+        
+        # only do 10000 events for background, process full blackboxes
+        total_size = 10000
+        chunk_size = 10000
+        if self.bb != 0:
+            total_size = 1000000
+            chunk_size = 100000
+
         data = []
         nonzero_particles = []
         event_indices = []
@@ -61,50 +69,52 @@ class GraphDataset(Dataset):
         py = []
         pz = []
         e = []
-        i = 0
+        event_idx = 0
+
         for raw_path in self.raw_paths:
-            df = pd.read_hdf(raw_path,stop=12500) # just read first 12500 events
-            all_events = df.values
-            rows = all_events.shape[0]
-            cols = all_events.shape[1]
-            event_idx = 0
-            for i in range(rows):
-                pseudojets_input = np.zeros(len([x for x in all_events[i][::3] if x > 0]), dtype=DTYPE_PTEPM)
-                for j in range(cols // 3):
-                    if (all_events[i][j*3]>0):
-                        pseudojets_input[j]['pT'] = all_events[i][j*3]
-                        pseudojets_input[j]['eta'] = all_events[i][j*3+1]
-                        pseudojets_input[j]['phi'] = all_events[i][j*3+2]
-                    pass
+            for k in range(total_size // chunksize - 1):
+                df = pd.read_hdf(path, start = k * chunk_size, stop = (k + 1) * chunk_size)
+                all_events = df.values
+                rows = all_events.shape[0]
+                cols = all_events.shape[1]
+            
+                for i in range(rows):
+                    pseudojets_input = np.zeros(len([x for x in all_events[i][::3] if x > 0]), dtype=DTYPE_PTEPM)
+                    for j in range(cols // 3):
+                        if (all_events[i][j*3]>0):
+                            pseudojets_input[j]['pT'] = all_events[i][j*3]
+                            pseudojets_input[j]['eta'] = all_events[i][j*3+1]
+                            pseudojets_input[j]['phi'] = all_events[i][j*3+2]
+                        pass
+
+                    # cluster jets from the particles in one observation
+                    sequence = cluster(pseudojets_input, R=1.0, p=-1)
+                    jets = sequence.inclusive_jets()
+                    for jet in jets: # for each jet get (px, py, pz, e)
+                        if jet.pt < 200: continue
+                        if self.n_particles > -1: 
+                            n_particles = self.n_particles
+                        else:
+                            n_particles = len(jet)
+                        particles = np.zeros((n_particles, 4))
+
+                        # store all the particles of this jet
+                        for p, part in enumerate(jet):
+                            if n_particles > -1 and p >= n_particles: break
+                            particles[p,:] = np.array([part.px,
+                                                       part.py,
+                                                       part.pz,
+                                                       part.e])
+                        data.append(particles)
+                        nonzero_particles.append(len(jet))
+                        event_indices.append(event_idx)
+                        masses.append(jet.mass)
+                        px.append(jet.px)
+                        py.append(jet.py)
+                        pz.append(jet.pz)
+                        e.append(jet.e)
                 
-                # cluster jets from the particles in one observation
-                sequence = cluster(pseudojets_input, R=1.0, p=-1)
-                jets = sequence.inclusive_jets()
-                for jet in jets: # for each jet get (px, py, pz, e)
-                    if jet.pt < 200: continue
-                    if self.n_particles > -1: 
-                        n_particles = self.n_particles
-                    else:
-                        n_particles = len(jet)
-                    particles = np.zeros((n_particles, 4))
-                    
-                    # store all the particles of this jet
-                    for p, part in enumerate(jet):
-                        if n_particles > -1 and p >= n_particles: break
-                        particles[p,:] = np.array([part.px,
-                                                   part.py,
-                                                   part.pz,
-                                                   part.e])
-                    data.append(particles)
-                    nonzero_particles.append(len(jet))
-                    event_indices.append(event_idx)
-                    masses.append(jet.mass)
-                    px.append(jet.px)
-                    py.append(jet.py)
-                    pz.append(jet.pz)
-                    e.append(jet.e)
-                
-                event_idx += 1
+                    event_idx += 1
 
         file_string = ['data_{}.pt', 'data_bb1_{}.pt', 'data_bb2_{}.pt', 'data_bb3_{}.pt']
         ijet = 0
