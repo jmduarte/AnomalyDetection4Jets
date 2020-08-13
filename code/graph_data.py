@@ -37,7 +37,7 @@ class GraphDataset(Dataset):
         # possible file formats of boxes to read
         file_string = ['data_{}.pt', 'data_bb1_{}.pt', 'data_bb2_{}.pt', 'data_bb3_{}.pt']
 
-        if self.start!=0 and self.stop!=-1:
+        if self.stop!=-1:
             njetpairs = self.stop-self.start
             return [file_string[self.bb].format(i) for i in range(self.start,self.stop)]
         else:
