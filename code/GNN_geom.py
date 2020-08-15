@@ -100,6 +100,10 @@ train_loader = DataLoader(train_dataset, batch_size=batch_size, pin_memory=True,
 valid_loader = DataLoader(valid_dataset, batch_size=batch_size, pin_memory=True, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, pin_memory=True, shuffle=False)
 
+train_samples = len(train_dataset)
+valid_samples = len(valid_dataset)
+test_samples = len(test_dataset)
+
 # create model
 model = EdgeNet(input_dim=input_dim, big_dim=big_dim, hidden_dim=hidden_dim).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr = lr)
