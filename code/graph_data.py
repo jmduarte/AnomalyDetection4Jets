@@ -41,7 +41,7 @@ class GraphDataset(Dataset):
             njets = self.stop-self.start
             return [file_string[self.bb].format(i) for i in range(self.start,self.stop)]
         else:
-            njets = 24043
+            njets = 30000
             return [file_string[self.bb].format(i) for i in range(njets)]
 
     def __len__(self):
@@ -55,11 +55,8 @@ class GraphDataset(Dataset):
     def process(self):
         
         # only do 10000 events for background, process full blackboxes
-        total_size = 10000
-        chunk_size = 10000
-        if self.bb != 0:
-            total_size = 1000000
-            chunk_size = 100000
+        total_size = 1000000
+        chunk_size = 100000
 
         for raw_path in self.raw_paths:
             event_idx = 0
