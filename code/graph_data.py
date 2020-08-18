@@ -70,18 +70,19 @@ class GraphDataset(Dataset):
         chunk_size = self.n_events // 10
 
         for raw_path in self.raw_paths:
+            
             event_idx = 0
             ijet = 0
+            data = []
+            nonzero_particles = []
+            event_indices = []
+            masses = []
+            px = []
+            py = []
+            pz = []
+            e = []
+            
             for k in range(total_size // chunk_size - 1):
-                
-                data = []
-                nonzero_particles = []
-                event_indices = []
-                masses = []
-                px = []
-                py = []
-                pz = []
-                e = []
         
                 df = pd.read_hdf(raw_path, start = k * chunk_size, stop = (k + 1) * chunk_size)
                 all_events = df.values
