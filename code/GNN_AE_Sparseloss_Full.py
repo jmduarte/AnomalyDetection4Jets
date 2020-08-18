@@ -120,9 +120,11 @@ optimizer = torch.optim.Adam(model.parameters(), lr = lr)
 modpath = osp.join('/anomalyvol/models/gnn/',model_fname+'.best.pth')
 try:
     model.load_state_dict(torch.load(modpath))
+except:
+    pass
 
 # Training loop
-stale_epochs = 10
+stale_epochs = 0
 best_valid_loss = 99999
 for epoch in range(0, n_epochs):
     loss = train(model, optimizer, train_loader, train_samples, batch_size)
