@@ -48,7 +48,7 @@ def test(model,loader,total,batch_size):
     for i,data in t:
         if data[0].x.shape[0] <= 1:
             continue
-        data = data[0].to(device)
+        data = data[0]
         batch_output = model(data)
         batch_loss_item = sparseloss3d(batch_output, data.y).item()
         sum_loss += batch_loss_item
@@ -65,7 +65,7 @@ def train(model, optimizer, loader, total, batch_size):
     for i,data in t:
         if data[0].x.shape[0] <= 1:
             continue
-        data = data[0].to(device)
+        data = data[0]
         optimizer.zero_grad()
         batch_output = model(data)
         batch_loss = sparseloss3d(batch_output, data.y)
@@ -114,7 +114,7 @@ valid_samples = len(valid_dataset)
 test_samples = len(test_dataset)
 
 # create model
-model = EdgeNet(input_dim=input_dim, big_dim=big_dim, hidden_dim=hidden_dim).to(device)
+model = EdgeNet(input_dim=input_dim, big_dim=big_dim, hidden_dim=hidden_dim)
 optimizer = torch.optim.Adam(model.parameters(), lr = lr)
 # load in model
 modpath = osp.join('/anomalyvol/models/gnn/',model_fname+'.best.pth')
