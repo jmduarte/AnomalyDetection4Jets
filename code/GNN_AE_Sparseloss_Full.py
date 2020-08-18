@@ -122,7 +122,7 @@ try:
     model.load_state_dict(torch.load(modpath))
 
 # Training loop
-stale_epochs = 0
+stale_epochs = 10
 best_valid_loss = 99999
 for epoch in range(0, n_epochs):
     loss = train(model, optimizer, train_loader, train_samples, batch_size)
