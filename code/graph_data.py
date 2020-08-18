@@ -36,13 +36,16 @@ class GraphDataset(Dataset):
 
     @property
     def processed_file_names(self):
-        # possible file formats of boxes to read
-        file_string = ['data_{}.pt', 'data_bb1_{}.pt', 'data_bb2_{}.pt', 'data_bb3_{}.pt']
+        # possible file formats of boxes to read with regex for glob
+        file_string = ['data_[0-9]*.pt', 'data_bb1_[0-9]*.pt', 'data_bb2_[0-9]*.pt', 'data_bb3_[0-9]*.pt']
         
         if self.full == True: # return all processed files for this box
             files = [osp.basename(x) for x in glob.glob(osp.join(self.processed_dir, file_string[self.bb]))]
             return files
-        elif self.stop!=-1:
+        
+        # possible file formats for fixed njets formatting
+        file_string = ['data_{}.pt', 'data_bb1_{}.pt', 'data_bb2_{}.pt', 'data_bb3_{}.pt']
+        if self.stop!=-1:
             njets = self.stop-self.start
             return [file_string[self.bb].format(i) for i in range(self.start,self.stop)]
         else:
