@@ -16,13 +16,16 @@ class GraphDataset(Dataset):
     stop: jet # to stop at (default to all)
     n_particles: particles + padding for jet (default no padding)
     bb: dataset to read in (0=background)
+    full: whether or not to read/process in the full file
+    n_events: how many events to process
     """
-    def __init__(self, root, transform=None, pre_transform=None, start=0, stop=-1, n_particles=-1, bb=0, full=False):
+    def __init__(self, root, transform=None, pre_transform=None, start=0, stop=-1, n_particles=-1, bb=0, full=False, n_events=10000):
         self.start = start
         self.stop = stop
         self.n_particles = n_particles
         self.bb = bb
         self.full = full
+        self.n_events = 1000000 if full else n_events
         super(GraphDataset, self).__init__(root, transform, pre_transform) 
 
 
@@ -63,11 +66,8 @@ class GraphDataset(Dataset):
     def process(self):
         
         # only do 10000 events for background, process full blackboxes
-        total_size = 10000
-        chunk_size = 10000
-        if self.bb != 0:
-            total_size = 1000000
-            chunk_size = 100000
+        total_size = n_events
+        chunk_size = n_events // 10
 
         for raw_path in self.raw_paths:
             event_idx = 0
