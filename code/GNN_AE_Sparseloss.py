@@ -98,7 +98,7 @@ tv_num = math.ceil(fulllen*tv_frac)
 batch_size = 1
 n_epochs = 800
 lr = 0.001
-patience = 10
+patience = 20
 device = 'cuda:0'
 model_fname = 'EdgeNetSparseLoss'
 
@@ -122,7 +122,7 @@ model.load_state_dict(torch.load(modpath))
 
 # Training loop
 stale_epochs = 0
-best_valid_loss = 99999
+best_valid_loss = test(model, valid_loader, valid_samples, batch_size)
 for epoch in range(0, n_epochs):
     loss = train(model, optimizer, train_loader, train_samples, batch_size)
     valid_loss = test(model, valid_loader, valid_samples, batch_size)
