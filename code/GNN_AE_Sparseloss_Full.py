@@ -88,7 +88,7 @@ def sparseloss3d(x,y):
     return loss
 
 # data and specifications
-gdata = GraphDataset(root='/anomalyvol/data/gnn_geom/full')
+gdata = GraphDataset(root='/anomalyvol/data/gnn_geom/full', full=True)
 input_dim = 4
 big_dim = 32
 hidden_dim = 2
