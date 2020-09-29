@@ -11,6 +11,7 @@ from graph_data import GraphDataset
 from torch_geometric.data import Data, DataListLoader, Batch
 from torch.utils.data import random_split
 from torch.nn import MSELoss
+from torch_scatter import scatter_mean, scatter_min
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -32,7 +33,15 @@ def invariant_mass(jet1_e, jet1_px, jet1_py, jet1_pz, jet2_e, jet2_px, jet2_py, 
     return torch.sqrt(torch.square(jet1_e + jet2_e) - torch.square(jet1_px + jet2_px)
                       - torch.square(jet1_py + jet2_py) - torch.square(jet1_pz + jet2_pz))
 
-def sparseloss3d(x,y):
+@torch.jit.script
+def my_cdist(x1, x2):
+    x1_norm = x1.pow(2).sum(dim=-1, keepdim=True)
+    x2_norm = x2.pow(2).sum(dim=-1, keepdim=True)
+    res = torch.addmm(x2_norm.transpose(-2, -1), x1, x2.transpose(-2, -1), alpha=-2).add_(x1_norm)
+    res = res.clamp_min_(1e-30)
+    return res
+
+def sparseloss3d(x,y,batch=None):
     """
     Sparse loss function for autoencoders, a permutation invariant euclidean distance function
     from set x -> y and y -> x.
@@ -44,11 +53,24 @@ def sparseloss3d(x,y):
     Returns:
         torch.tensor of the same shape as x and y representing the loss.
     """
-    num_parts = x.shape[0]
     dist = torch.pow(torch.cdist(x,y),2)
-    in_dist_out = torch.min(dist,dim=0)
-    out_dist_in = torch.min(dist,dim=1)
-    loss = torch.sum(in_dist_out.values + out_dist_in.values) / num_parts
+    print(dist.shape)
+    print(dist)
+    #dist = my_cdist(x,y)
+    if batch==None:
+        in_dist_out = torch.min(dist,dim=-2)
+        out_dist_in = torch.min(dist,dim=-1)
+        loss = torch.mean(in_dist_out.values + out_dist_in.values)
+    else:
+        in_dist_out, _ = scatter_min(dist,batch,dim=-2)
+        out_dist_in, _ = scatter_min(dist,batch,dim=-1)
+        print(in_dist_out.shape)
+        print(in_dist_out)
+        print(out_dist_in.shape)
+        print(out_dist_in)
+        loss = torch.mean(in_dist_out + out_dist_in.transpose(-2, -1), dim=-1)
+        print(loss.shape)
+        print(loss)
     return loss
 
 def make_bump_graph(nonoutlier_mass, outlier_mass, x_lab, save_name, bins, output_dir):
@@ -147,9 +169,8 @@ def process(data_loader, num_events, model_fname, model_num, use_sparseloss, lat
             dijet_mass = invariant_mass(jets0_u[:,6], jets0_u[:,3], jets0_u[:,4], jets0_u[:,5],
                                         jets1_u[:,6], jets1_u[:,3], jets1_u[:,4], jets1_u[:,5])
             njets = len(torch.unique(batch))
-            losses = torch.zeros((njets), dtype=torch.float32)
-            for ib in torch.unique(batch):
-                losses[ib] = loss_ftn(jets_rec[batch==ib], jets_x[batch==ib])
+            losses = loss_ftn(jets_rec, jets_x, batch)
+            print(losses)
 
             loss0 = losses[::2]
             loss1 = losses[1::2]
